@@ -1,1 +1,18 @@
+# Data files
 data/
+/data/*
+!/data/*.log
+
+# Environment and IDE files
+.DS_Store
+*.gem
+*.rbc
+/.config
+/tmp/
+
+# Exploratory notebook
+/exploratory.ipynb
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
