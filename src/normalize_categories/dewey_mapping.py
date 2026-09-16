@@ -75,3 +75,7 @@ ODS_ENGLISH_TO_SPANISH = {
     "16 Peace, justice and strong institutions": "16 Paz, justicia e instituciones sólidas",
     "17 Partnerships for the goals": "17 Alianzas para lograr los objetivos",
 }
+
+# Mapa inverso para asegurar idioma inglés en columna dc.subject.ods
+ODS_SPANISH_TO_ENGLISH = {v: k for k, v in ODS_ENGLISH_TO_SPANISH.items()}
+

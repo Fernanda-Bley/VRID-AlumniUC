@@ -70,16 +70,21 @@ def normalize_dewey_pair(ddc_code: str, dewey_text: str):
     return clean_code, dewey_text
 
 
-def normalize_ods_tag(ods_val: str) -> str:
-    """Traduce marcas ODS en inglés a su versión oficial en español y corrige Mojibake."""
+def normalize_ods_tag(ods_val: str, target_lang: str = "es") -> str:
+    """Normaliza y mantiene la marca ODS en el idioma objetivo ('es' para español, 'en' para inglés)."""
     if not ods_val:
         return ""
     
     ods_val = clean_mojibake_text(ods_val)
     
-    # Traducción directo si está en inglés
-    if ods_val in ODS_ENGLISH_TO_SPANISH:
-        return ODS_ENGLISH_TO_SPANISH[ods_val]
+    if target_lang == "es":
+        # Convertir a español si viene en inglés
+        if ods_val in ODS_ENGLISH_TO_SPANISH:
+            return ODS_ENGLISH_TO_SPANISH[ods_val]
+    elif target_lang == "en":
+        # Convertir a inglés si viene en español
+        if ods_val in ODS_SPANISH_TO_ENGLISH:
+            return ODS_SPANISH_TO_ENGLISH[ods_val]
         
     return ods_val
 
@@ -136,11 +141,12 @@ def normalize_category_columns(header: list, row: list) -> list:
         if dewey_es_idx is not None:
             row_copy[dewey_es_idx] = norm_text
 
-    # 2. Normalizar ODS (Inglés y Español)
+    # 2. Normalizar ODS respetando el idioma oficial de cada columna (Inglés en dc.subject.ods, Español en dc.subject.odspa)
     if ods_idx is not None and row_copy[ods_idx]:
-        row_copy[ods_idx] = normalize_ods_tag(row_copy[ods_idx])
+        row_copy[ods_idx] = normalize_ods_tag(row_copy[ods_idx], target_lang="en")
     if odspa_idx is not None and row_copy[odspa_idx]:
-        row_copy[odspa_idx] = normalize_ods_tag(row_copy[odspa_idx])
+        row_copy[odspa_idx] = normalize_ods_tag(row_copy[odspa_idx], target_lang="es")
+
 
     # 3. Normalizar celdas de materias generales
     for idx, name in enumerate(header):
