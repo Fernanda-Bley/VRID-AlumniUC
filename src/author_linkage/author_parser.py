@@ -96,29 +96,39 @@ def recover_missing_author(row_dict: dict, codpers_map: dict = None) -> str:
 def build_codpers_map(header: list, rows: list) -> dict:
     """
     Construye una tabla hash global de ID Persona UC (codpers) -> Nombre de Autor
-    a partir de todas las filas catalogadas del dataset.
+    a partir de dc.information.autoruc y sipa.codpersvinculados en todo el dataset.
     """
     author_idx = header.index("dc.contributor.author") if "dc.contributor.author" in header else None
     codpers_idx = header.index("sipa.codpersvinculados") if "sipa.codpersvinculados" in header else None
-
-    if author_idx is None or codpers_idx is None:
-        return {}
+    autoruc_idx = header.index("dc.information.autoruc") if "dc.information.autoruc" in header else None
 
     codpers_map = {}
     for row in rows:
-        author_val = str(row[author_idx] or "").strip()
-        codpers_val = str(row[codpers_idx] or "").strip()
+        # 1. Indexar desde texto semiestructurado dc.information.autoruc
+        if autoruc_idx is not None and row[autoruc_idx] and str(row[autoruc_idx]).strip():
+            records = parse_autoruc_block(row[autoruc_idx])
+            for r in records:
+                c_id = r.get("codpers")
+                a_name = r.get("autor")
+                if c_id and a_name and c_id not in codpers_map:
+                    codpers_map[c_id] = a_name
 
-        if author_val and codpers_val:
-            authors = [a.strip() for a in author_val.split("||") if a.strip()]
-            c_ids = [c.strip() for c in codpers_val.split("||") if c.strip()]
+        # 2. Indexar desde pares dc.contributor.author y sipa.codpersvinculados
+        if author_idx is not None and codpers_idx is not None:
+            author_val = str(row[author_idx] or "").strip()
+            codpers_val = str(row[codpers_idx] or "").strip()
 
-            if len(authors) == len(c_ids):
-                for c_id, a_name in zip(c_ids, authors):
-                    if c_id and a_name and c_id not in codpers_map:
-                        codpers_map[c_id] = a_name
+            if author_val and codpers_val:
+                authors = [a.strip() for a in author_val.split("||") if a.strip()]
+                c_ids = [c.strip() for c in codpers_val.split("||") if c.strip()]
+
+                if len(authors) == len(c_ids):
+                    for c_id, a_name in zip(c_ids, authors):
+                        if c_id and a_name and c_id not in codpers_map:
+                            codpers_map[c_id] = a_name
 
     return codpers_map
+
 
 
 def process_author_linkage(header: list, row: list, codpers_map: dict = None) -> list:
