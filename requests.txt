@@ -1,0 +1,14 @@
+ipython>=4.1.2
+jupyter>=1.0.0
+matplotlib>=1.5.1
+notebook>=4.1.0
+
+tqdm
+numpy
+pandas
+openpyxl
+watermark
+scikit-learn
+scipy
+python-calamine
+pysqlite3
