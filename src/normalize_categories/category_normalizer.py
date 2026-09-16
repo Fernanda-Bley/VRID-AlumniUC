@@ -3,7 +3,13 @@ Módulo principal de normalización de categorías repetidas y códigos Dewey in
 Ubicación: src/normalize_categories/category_normalizer.py
 """
 
-from .dewey_mapping import CATEGORY_MOJIBAKE, DEWEY_CODE_TO_SPANISH, ODS_ENGLISH_TO_SPANISH
+from .dewey_mapping import (
+    CATEGORY_MOJIBAKE,
+    DEWEY_CODE_TO_SPANISH,
+    ODS_ENGLISH_TO_SPANISH,
+    ODS_SPANISH_TO_ENGLISH,
+)
+
 
 
 def clean_mojibake_text(text: str) -> str:
