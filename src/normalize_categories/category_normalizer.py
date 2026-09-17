@@ -43,9 +43,13 @@ def clean_mojibake_text(text: str) -> str:
     return text.strip()
 
 
+import re
+
+
 def normalize_dewey_pair(ddc_code: str, dewey_text: str):
     """
     Recibe el código numérico Dewey (dc.subject.ddc) y su descripción (dc.subject.dewey[es_ES]).
+    Normaliza formatos mixtos: comas decimales, ceros a la izquierda y casillas contaminadas.
     Devuelve la tupla normalizada (código_numérico, descripción_español).
     """
     ddc_code = clean_mojibake_text(str(ddc_code or "").strip())
@@ -53,13 +57,29 @@ def normalize_dewey_pair(ddc_code: str, dewey_text: str):
     if dewey_text.endswith("."):
         dewey_text = dewey_text[:-1].rstrip()
 
+    # 1. Estandarizar separador decimal de coma a punto (ej. '512,942' -> '512.942')
+    ddc_code = ddc_code.replace(",", ".")
+
+    # 2. Extraer código numérico si la casilla viene contaminada con texto (ej. '610||Medicina y salud')
+    if not ddc_code.isdigit() and not re.match(r"^\d+\.\d+$", ddc_code):
+        num_match = re.search(r"\b(\d{1,3}(?:\.\d+)?)\b", ddc_code)
+        if num_match:
+            ddc_code = num_match.group(1)
+        else:
+            # Si no hay número válido, limpiar si era un URL o texto basura
+            if ddc_code.startswith("http") or len(ddc_code) > 20:
+                ddc_code = ""
+
+    # 3. Rellenar ceros a la izquierda si el código tiene 1 o 2 dígitos (ej. '70' -> '070', '0' -> '000')
+    if ddc_code.isdigit() and len(ddc_code) < 3:
+        ddc_code = ddc_code.zfill(3)
 
     # Extraer código de 3 dígitos base (ej. '616.0475' -> '610', '338.1' -> '330')
-    clean_code = ddc_code.split('.')[0] if '.' in ddc_code else ddc_code
+    clean_code = ddc_code.split(".")[0] if "." in ddc_code else ddc_code
 
     # Si la descripción de texto es numérico (ej. '610'), limpiarla para buscar el nombre real
     if dewey_text.isdigit():
-        clean_code = clean_code or dewey_text
+        clean_code = clean_code or dewey_text.zfill(3)
         dewey_text = ""
 
     # Buscar descripción estándar si no existe o si se identificó un código numérico conocido
@@ -74,6 +94,7 @@ def normalize_dewey_pair(ddc_code: str, dewey_text: str):
             dewey_text = DEWEY_CODE_TO_SPANISH[base_hundred]
 
     return clean_code, dewey_text
+
 
 
 def normalize_ods_tag(ods_val: str, target_lang: str = "es") -> str:
