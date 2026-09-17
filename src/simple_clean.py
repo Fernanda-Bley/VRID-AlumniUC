@@ -14,7 +14,17 @@ def clean_value(value):
 
 def is_invalid_title(value):
     """Identify spreadsheet error values that are not real titles."""
-    return value in {"#�NOMBRE?", "#NOMBRE?", "#�VALOR!", "#VALOR!"}
+    if value is None:
+        return True
+    val = str(value).strip()
+    if not val:
+        return True
+    invalid_set = {
+        "#NOMBRE?", "#¿NOMBRE?", "#NAME?",
+        "#VALOR!", "#¡VALOR!", "#VALUE!",
+        "#N/A", "#REF!", "#DIV/0!", "#NUM!", "#NULL!"
+    }
+    return val in invalid_set or "NOMBRE?" in val or "VALOR!" in val
 
 
 def _fix_mojibake(value):

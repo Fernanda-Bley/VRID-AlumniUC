@@ -127,7 +127,11 @@ def build_codpers_map(header: list, rows: list) -> dict:
                         if c_id and a_name and c_id not in codpers_map:
                             codpers_map[c_id] = a_name
 
+    return codpers_map
+
+
 import pandas as pd
+
 
 
 def build_codpers_map_from_df(df: pd.DataFrame) -> dict:

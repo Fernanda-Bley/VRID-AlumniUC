@@ -174,8 +174,11 @@ def normalize_category_columns(header: list, row: list) -> list:
     if odspa_idx is not None and row_copy[odspa_idx]:
         row_copy[odspa_idx] = normalize_ods_tag(row_copy[odspa_idx], target_lang="es")
 
+    return row_copy
+
 
 import pandas as pd
+
 
 
 def normalize_categories_in_df(df: pd.DataFrame) -> pd.DataFrame:
