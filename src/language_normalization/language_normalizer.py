@@ -65,3 +65,17 @@ def normalize_language_columns(header: list, row: list) -> list:
             if row_copy[idx]:
                 row_copy[idx] = normalize_language_code(row_copy[idx])
     return row_copy
+
+
+import pandas as pd
+
+
+def normalize_languages_in_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normaliza todas las columnas de idioma en un DataFrame de Pandas (ej. dc.language.iso).
+    """
+    lang_cols = [c for c in df.columns if "language" in c.lower()]
+    for col in lang_cols:
+        df[col] = df[col].fillna("").astype(str).apply(normalize_language_code)
+    return df
+

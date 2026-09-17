@@ -58,3 +58,17 @@ def normalize_rights_columns(header: list, row: list) -> list:
             if row_copy[idx]:
                 row_copy[idx] = normalize_rights_cell(row_copy[idx])
     return row_copy
+
+
+import pandas as pd
+
+
+def normalize_rights_in_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normaliza todas las columnas de derechos/permisos en un DataFrame de Pandas (ej. dc.rights.spa).
+    """
+    rights_cols = [c for c in df.columns if "rights.spa" in c.lower() or "rights.access" in c.lower()]
+    for col in rights_cols:
+        df[col] = df[col].fillna("").astype(str).apply(normalize_rights_cell)
+    return df
+

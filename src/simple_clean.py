@@ -84,10 +84,16 @@ def has_missing_title(cleaned_row, title_index):
     return title_index is not None and not cleaned_row[title_index].strip()
 
 
-from author_linkage import build_codpers_map, process_author_linkage
-from normalize_categories import normalize_category_columns
-from language_normalization import normalize_language_columns
-from rights_normalization import normalize_rights_columns
+from author_linkage import (
+    build_codpers_map,
+    build_codpers_map_from_df,
+    process_author_linkage,
+    recover_missing_authors_in_df,
+)
+from normalize_categories import normalize_category_columns, normalize_categories_in_df
+from language_normalization import normalize_language_columns, normalize_languages_in_df
+from rights_normalization import normalize_rights_columns, normalize_rights_in_df
+import pandas as pd
 
 
 def clean_rows(header, rows):
@@ -126,6 +132,63 @@ def clean_rows(header, rows):
         cleaned_rows.append(cleaned)
 
     return cleaned_rows, missing_titles
+
+
+def clean_df(df: pd.DataFrame, codpers_map: dict = None) -> tuple:
+    """
+    Limpia y normaliza un DataFrame de Pandas integrando todos los módulos:
+    - Limpieza de Mojibake y espacios en blanco
+    - Deduplicación de campos de autor
+    - Recuperación de títulos mediante fallback
+    - Recuperación de autores ausentes con codpers_map
+    - Normalización de categorías, Dewey, ODS, idiomas ISO y derechos de acceso.
+
+    Retorna (df_limpio, lista_id_sin_titulo).
+    """
+    df = df.copy()
+
+    # 1. Limpieza base de Mojibake y espacios en celdas de texto
+    for col in df.select_dtypes(include=['object']).columns:
+        df[col] = df[col].fillna("").astype(str).apply(_fix_mojibake).str.strip()
+
+    # 2. Deduplicar campos multivalor de autores
+    author_cols = [c for c in df.columns if "author" in c.lower() or "autor" in c.lower()]
+    for col in author_cols:
+        df[col] = df[col].apply(deduplicate_delimited)
+
+    # 3. Limpieza y Fallback de Títulos
+    missing_titles = []
+    if "dc.title" in df.columns:
+        df["dc.title"] = df["dc.title"].apply(lambda t: "" if is_invalid_title(t) else t)
+
+        for fallback_col in TITLE_FALLBACK_FIELDS:
+            if fallback_col in df.columns:
+                mask_missing = (df["dc.title"] == "") & (df[fallback_col] != "") & (~df[fallback_col].apply(is_invalid_title))
+                df.loc[mask_missing, "dc.title"] = df.loc[mask_missing, fallback_col]
+
+        id_col = df.columns[0]
+        missing_titles = df.loc[df["dc.title"] == "", id_col].tolist()
+
+    # 4. Construcción de catálogo y recuperación de autores
+    if codpers_map is None:
+        codpers_map = build_codpers_map_from_df(df)
+
+    df = recover_missing_authors_in_df(df, codpers_map=codpers_map)
+
+    # 5. Normalizaciones de módulos especializados
+    df = normalize_categories_in_df(df)
+    df = normalize_languages_in_df(df)
+    df = normalize_rights_in_df(df)
+
+    return df, missing_titles
+
+
+def drop_empty_columns_df(df: pd.DataFrame) -> tuple:
+    """Elimina columnas completamente vacías en un DataFrame de Pandas."""
+    empty_cols = [col for col in df.columns if (df[col].fillna("").astype(str).str.strip() == "").all()]
+    df_filtered = df.drop(columns=empty_cols)
+    return df_filtered, empty_cols
+
 
 
 
