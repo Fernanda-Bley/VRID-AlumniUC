@@ -19,6 +19,8 @@ sys.path.insert(0, os.path.join(BASE_DIR, "src"))
 
 from author_linkage import build_codpers_map, process_author_linkage
 from normalize_categories import normalize_category_columns
+from language_normalization import normalize_language_columns
+from rights_normalization import normalize_rights_columns
 
 ARCHIVO_ORIGEN = os.path.join(BASE_DIR, "data", "EXPORT_SIPA(in).csv")
 ARCHIVO_DESTINO = os.path.join(BASE_DIR, "data", "EXPORT_SIPA_clean.csv")
@@ -63,8 +65,8 @@ print("\n[Paso 2/3] Construyendo catálogo global de personas UC (codpers_map)..
 codpers_map = build_codpers_map(encabezado, filas_alineadas)
 print(f"-> Catálogo construido con {len(codpers_map):,} personas únicas catalogadas.")
 
-# PASO 3: Recuperación de Autores y Normalización de Categorías/Dewey
-print("\n[Paso 3/3] Aplicando recuperación de autores y normalización Dewey/ODS...")
+# PASO 3: Recuperación de Autores, Normalización Dewey/ODS, Idiomas y Derechos
+print("\n[Paso 3/3] Aplicando recuperación de autores y normalización Dewey/ODS/Idiomas/Derechos...")
 autores_recuperados = 0
 filas_procesadas = 0
 
@@ -79,15 +81,23 @@ with open(ARCHIVO_DESTINO, 'w', encoding='utf-8-sig', errors='replace', newline=
         tenia_autor = str(fila[author_idx] or "").strip() if author_idx is not None else True
 
         # 1. Recuperación de Autor Faltante (Nivel 1 codpers + autoruc)
-        fila_autores_listos = process_author_linkage(encabezado, fila, codpers_map=codpers_map)
-        tiene_autor_nuevo = str(fila_autores_listos[author_idx] or "").strip() if author_idx is not None else True
+        fila_autores = process_author_linkage(encabezado, fila, codpers_map=codpers_map)
+        tiene_autor_nuevo = str(fila_autores[author_idx] or "").strip() if author_idx is not None else True
 
         if not tenia_autor and tiene_autor_nuevo:
             autores_recuperados += 1
 
         # 2. Normalización de Categorías, Dewey y ODS
-        fila_final = normalize_category_columns(encabezado, fila_autores_listos)
+        fila_cat = normalize_category_columns(encabezado, fila_autores)
+
+        # 3. Normalización de Idiomas ISO (639-1)
+        fila_lang = normalize_language_columns(encabezado, fila_cat)
+
+        # 4. Normalización de Derechos de Acceso
+        fila_final = normalize_rights_columns(encabezado, fila_lang)
+
         escritor.writerow(fila_final)
+
 
         if filas_procesadas % 30000 == 0:
             print(f"  Procesadas {filas_procesadas:,} / {len(filas_alineadas):,} filas...")
