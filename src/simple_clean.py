@@ -137,7 +137,7 @@ def clean_rows(header, rows):
 def clean_df(df: pd.DataFrame, codpers_map: dict = None) -> tuple:
     """
     Limpia y normaliza un DataFrame de Pandas integrando todos los módulos:
-    - Limpieza de Mojibake y espacios en blanco
+    - Limpieza de Mojibake y espacios en blanco en campos de texto relevante
     - Deduplicación de campos de autor
     - Recuperación de títulos mediante fallback
     - Recuperación de autores ausentes con codpers_map
@@ -147,14 +147,26 @@ def clean_df(df: pd.DataFrame, codpers_map: dict = None) -> tuple:
     """
     df = df.copy()
 
-    # 1. Limpieza base de Mojibake y espacios en celdas de texto
-    for col in df.select_dtypes(include=['object']).columns:
-        df[col] = df[col].fillna("").astype(str).apply(_fix_mojibake).str.strip()
+    # 1. Limpieza base de Mojibake enfocada solo en columnas de texto metadata propensas a corrupción
+    text_mojibake_cols = [
+        c for c in df.columns 
+        if c in ("dc.title", "dc.description.abstract", "dc.subject", "dc.publisher", "dc.information.autoruc")
+        or "title" in c.lower() or "abstract" in c.lower()
+    ]
+    
+    for col in text_mojibake_cols:
+        col_s = df[col].fillna("").astype(str)
+        if col_s.str.contains(r"[ÃÂâ√]", regex=True, na=False).any():
+            for broken, replacement in MOJIBAKE_REPLACEMENTS.items():
+                col_s = col_s.str.replace(broken, replacement, regex=False)
+            df[col] = col_s.str.strip()
 
-    # 2. Deduplicar campos multivalor de autores
+    # 2. Deduplicar campos multivalor de autores únicamente si contienen el delimitador ||
     author_cols = [c for c in df.columns if "author" in c.lower() or "autor" in c.lower()]
     for col in author_cols:
-        df[col] = df[col].apply(deduplicate_delimited)
+        col_s = df[col].fillna("").astype(str)
+        if col_s.str.contains(r"\|\|", regex=True, na=False).any():
+            df[col] = col_s.apply(deduplicate_delimited)
 
     # 3. Limpieza y Fallback de Títulos
     missing_titles = []
@@ -181,6 +193,7 @@ def clean_df(df: pd.DataFrame, codpers_map: dict = None) -> tuple:
     df = normalize_rights_in_df(df)
 
     return df, missing_titles
+
 
 
 def drop_empty_columns_df(df: pd.DataFrame) -> tuple:
