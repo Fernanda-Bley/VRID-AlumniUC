@@ -9,6 +9,7 @@ from .category_normalizer import (
     normalize_ods_tag,
     normalize_subject_cell,
     normalize_category_columns,
+    normalize_categories_in_df,
 )
 
 __all__ = [
@@ -17,4 +18,6 @@ __all__ = [
     "normalize_ods_tag",
     "normalize_subject_cell",
     "normalize_category_columns",
+    "normalize_categories_in_df",
 ]
+

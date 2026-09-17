@@ -127,8 +127,44 @@ def build_codpers_map(header: list, rows: list) -> dict:
                         if c_id and a_name and c_id not in codpers_map:
                             codpers_map[c_id] = a_name
 
-    return codpers_map
+import pandas as pd
 
+
+def build_codpers_map_from_df(df: pd.DataFrame) -> dict:
+    """
+    Construye el catálogo hash codpers_map a partir de un DataFrame de Pandas.
+    Indexa dc.information.autoruc, dc.contributor.author y sipa.codpersvinculados.
+    """
+    codpers_map = {}
+    
+    # 1. Indexar desde dc.information.autoruc
+    if "dc.information.autoruc" in df.columns:
+        for autoruc_val in df["dc.information.autoruc"].dropna():
+            if str(autoruc_val).strip():
+                records = parse_autoruc_block(str(autoruc_val))
+                for r in records:
+                    c_id = r.get("codpers")
+                    a_name = r.get("autor")
+                    if c_id and a_name and c_id not in codpers_map:
+                        codpers_map[c_id] = a_name
+
+    # 2. Indexar desde pares dc.contributor.author y sipa.codpersvinculados
+    if "dc.contributor.author" in df.columns and "sipa.codpersvinculados" in df.columns:
+        subset = df[["dc.contributor.author", "sipa.codpersvinculados"]].dropna()
+        for _, row in subset.iterrows():
+            author_val = str(row["dc.contributor.author"]).strip()
+            codpers_val = str(row["sipa.codpersvinculados"]).strip()
+
+            if author_val and codpers_val:
+                authors = [a.strip() for a in author_val.split("||") if a.strip()]
+                c_ids = [c.strip() for c in codpers_val.split("||") if c.strip()]
+
+                if len(authors) == len(c_ids):
+                    for c_id, a_name in zip(c_ids, authors):
+                        if c_id and a_name and c_id not in codpers_map:
+                            codpers_map[c_id] = a_name
+
+    return codpers_map
 
 
 def process_author_linkage(header: list, row: list, codpers_map: dict = None) -> list:
@@ -146,4 +182,23 @@ def process_author_linkage(header: list, row: list, codpers_map: dict = None) ->
             row_copy[author_idx] = recovered
 
     return row_copy
+
+
+def recover_missing_authors_in_df(df: pd.DataFrame, codpers_map: dict = None) -> pd.DataFrame:
+    """
+    Recupera y rellenado autores faltantes directamente sobre un DataFrame de Pandas.
+    """
+    if "dc.contributor.author" not in df.columns:
+        return df
+
+    missing_mask = df["dc.contributor.author"].isna() | (df["dc.contributor.author"].astype(str).str.strip() == "")
+
+    def _pandas_recover_row(row):
+        return recover_missing_author(row.to_dict(), codpers_map=codpers_map)
+
+    df.loc[missing_mask, "dc.contributor.author"] = df[missing_mask].apply(_pandas_recover_row, axis=1)
+    return df
+
+
+
 

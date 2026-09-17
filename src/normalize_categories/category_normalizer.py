@@ -175,10 +175,34 @@ def normalize_category_columns(header: list, row: list) -> list:
         row_copy[odspa_idx] = normalize_ods_tag(row_copy[odspa_idx], target_lang="es")
 
 
+import pandas as pd
+
+
+def normalize_categories_in_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normaliza celdas de materias, códigos Dewey y ODS directamente sobre un DataFrame de Pandas.
+    """
+    # 1. Normalizar par Dewey
+    if "dc.subject.ddc" in df.columns or "dc.subject.dewey[es_ES]" in df.columns:
+        dewey_res = df.apply(
+            lambda r: normalize_dewey_pair(r.get("dc.subject.ddc"), r.get("dc.subject.dewey[es_ES]")),
+            axis=1,
+        )
+        if "dc.subject.ddc" in df.columns:
+            df["dc.subject.ddc"] = [r[0] for r in dewey_res]
+        if "dc.subject.dewey[es_ES]" in df.columns:
+            df["dc.subject.dewey[es_ES]"] = [r[1] for r in dewey_res]
+
+    # 2. Normalizar ODS
+    if "dc.subject.ods" in df.columns:
+        df["dc.subject.ods"] = df["dc.subject.ods"].fillna("").astype(str).apply(lambda x: normalize_ods_tag(x, target_lang="en"))
+    if "dc.subject.odspa" in df.columns:
+        df["dc.subject.odspa"] = df["dc.subject.odspa"].fillna("").astype(str).apply(lambda x: normalize_ods_tag(x, target_lang="es"))
+
     # 3. Normalizar celdas de materias generales
-    for idx, name in enumerate(header):
-        if "subject" in name.lower() and idx not in (ddc_idx, dewey_es_idx, ods_idx, odspa_idx):
-            if row_copy[idx]:
-                row_copy[idx] = normalize_subject_cell(row_copy[idx])
-                
-    return row_copy
+    subject_cols = [c for c in df.columns if "subject" in c.lower() and c not in ("dc.subject.ddc", "dc.subject.dewey[es_ES]", "dc.subject.ods", "dc.subject.odspa")]
+    for col in subject_cols:
+        df[col] = df[col].fillna("").astype(str).apply(normalize_subject_cell)
+
+    return df
+

@@ -19,14 +19,11 @@ import pandas as pd
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, "src"))
 
-from author_linkage import build_codpers_map, recover_missing_author
-from normalize_categories import (
-    normalize_category_columns,
-    normalize_dewey_pair,
-    normalize_ods_tag,
-)
+from author_linkage import build_codpers_map_from_df, recover_missing_authors_in_df
+from normalize_categories import normalize_categories_in_df, normalize_dewey_pair, normalize_ods_tag
 from language_normalization import normalize_language_code
 from rights_normalization import normalize_rights_cell
+
 
 ARCHIVO_ORIGEN = os.path.join(BASE_DIR, "data", "EXPORT_SIPA(in).csv")
 ARCHIVO_DESTINO = os.path.join(BASE_DIR, "data", "EXPORT_SIPA_clean.csv")
@@ -68,9 +65,9 @@ with open(ARCHIVO_ORIGEN, 'r', encoding='latin-1', errors='replace', newline='')
 df = pd.DataFrame(filas_alineadas, columns=encabezado)
 print(f"-> DataFrame de Pandas creado: {len(df):,} filas x {len(df.columns)} columnas.")
 
-# PASO 2: Construcción de Catálogo de Autores (codpers_map)
-print("\n[Paso 2/4] Construyendo catálogo hash codpers_map con 17.200+ autores UC...")
-codpers_map = build_codpers_map(encabezado, filas_alineadas)
+# PASO 2: Construcción de Catálogo de Autores con Pandas (codpers_map)
+print("\n[Paso 2/4] Construyendo catálogo hash codpers_map con 17.200+ autores UC desde el DataFrame...")
+codpers_map = build_codpers_map_from_df(df)
 print(f"-> Catálogo codpers_map generado con {len(codpers_map):,} entradas.")
 
 # PASO 3: Transformaciones y Normalización Vectorizada con Pandas
@@ -80,13 +77,11 @@ print("\n[Paso 3/4] Aplicando transformaciones y normalizaciones con Pandas...")
 missing_authors_mask = df["dc.contributor.author"].isna() | (df["dc.contributor.author"].astype(str).str.strip() == "")
 autores_antes = (~missing_authors_mask).sum()
 
-def pandas_recover_author(row):
-    return recover_missing_author(row.to_dict(), codpers_map=codpers_map)
-
-df.loc[missing_authors_mask, "dc.contributor.author"] = df[missing_authors_mask].apply(pandas_recover_author, axis=1)
+df = recover_missing_authors_in_df(df, codpers_map=codpers_map)
 autores_despues = (df["dc.contributor.author"].fillna("").astype(str).str.strip() != "").sum()
 autores_recuperados = autores_despues - autores_antes
 print(f"-> Autores faltantes recuperados en el DataFrame: {autores_recuperados:,}")
+
 
 # B. Normalización Dewey (DDC) con Pandas
 print("-> Normalizando códigos Dewey con Pandas...")
