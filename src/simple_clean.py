@@ -84,24 +84,49 @@ def has_missing_title(cleaned_row, title_index):
     return title_index is not None and not cleaned_row[title_index].strip()
 
 
+from author_linkage import build_codpers_map, process_author_linkage
+from normalize_categories import normalize_category_columns
+from language_normalization import normalize_language_columns
+from rights_normalization import normalize_rights_columns
+
+
 def clean_rows(header, rows):
-    """Clean all rows and detect which ones ended up without a title.
+    """Clean all rows, recover missing authors, normalize categories/Dewey, languages, and rights.
 
     Returns (cleaned_rows, missing_title_ids).
     """
     author_indexes = find_author_indexes(header)
     title_index = find_title_index(header)
 
+    # 1. Construir catálogo global de personas UC para recuperación de autores Nivel 1
+    codpers_map = build_codpers_map(header, rows)
+
     cleaned_rows = []
     missing_titles = []
 
     for row in rows:
+        # A. Limpieza de valores base y títulos de fallback
         cleaned = clean_row(row, header, author_indexes, title_index)
+
+        # B. Recuperación de autores faltantes (autoruc + codpers_map + autor corporativo)
+        cleaned = process_author_linkage(header, cleaned, codpers_map=codpers_map)
+
+        # C. Normalización de categorías, códigos Dewey y ODS
+        cleaned = normalize_category_columns(header, cleaned)
+
+        # D. Normalización de códigos de idioma ISO (639-1)
+        cleaned = normalize_language_columns(header, cleaned)
+
+        # E. Normalización de derechos de acceso y permisos
+        cleaned = normalize_rights_columns(header, cleaned)
+
         if has_missing_title(cleaned, title_index):
             missing_titles.append(row[0])
+            
         cleaned_rows.append(cleaned)
 
     return cleaned_rows, missing_titles
+
 
 
 def drop_empty_columns(header, rows):
