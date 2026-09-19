@@ -9,17 +9,16 @@ import itertools
 from author_linkage import parse_autoruc_block
 
 
-def extract_graph_elements(df: pd.DataFrame) -> dict:
+def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> dict:
     """
     Extrae nodos y relaciones del DataFrame limpio de SIPA.
     
-    Retorna un diccionario con DataFrames de Nodos y Aristas:
-    - Nodos: Work, Person, Department, Dewey, ODS, Publisher
-    - Aristas: AUTHORED, AFFILIATED_TO, CO_AUTHORED_WITH, CLASSIFIED_IN, CONTRIBUTES_TO, PUBLISHED_IN, INTERDEPARTMENTAL
+    Nodos Núcleo: Work, Person, Department, Dewey, ODS, Publisher
+    Nodos Extendidos: Funder, DocumentType, IndexSource, Keyword
     """
     df = df.copy()
 
-    # Storage for Nodes
+    # Core Nodes Storage
     nodes_work = []
     nodes_person = {}      # person_id -> {name, codpers, orcid, is_uc}
     nodes_dept = {}        # dept_name -> {dept_id, name}
@@ -27,7 +26,13 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
     nodes_ods = {}         # ods_code -> {code, name_en, name_es}
     nodes_publisher = {}   # publisher_name -> {publisher_id, name}
 
-    # Storage for Edges
+    # Extended Nodes Storage
+    nodes_funder = {}      # funder_name -> {funder_id, name}
+    nodes_doctype = {}     # type_name -> {type_id, name}
+    nodes_source = {}      # source_name -> {source_id, name}
+    nodes_keyword = {}     # kw_name -> {keyword_id, name}
+
+    # Core Edges Storage
     edges_authored = []              # (person_id, work_id)
     edges_affiliated = set()         # (person_id, dept_id)
     coauthorship_counts = defaultdict(int) # tuple(sorted(p1, p2)) -> weight
@@ -36,8 +41,18 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
     edges_published_in = []          # (work_id, publisher_id)
     interdept_counts = defaultdict(int) # tuple(sorted(d1, d2)) -> weight
 
+    # Extended Edges Storage
+    edges_funded_by = []             # (work_id, funder_id)
+    edges_has_type = []              # (work_id, type_id)
+    edges_indexed_in = []            # (work_id, source_id)
+    edges_has_keyword = []           # (work_id, keyword_id)
+
     dept_counter = 1
     publisher_counter = 1
+    funder_counter = 1
+    type_counter = 1
+    source_counter = 1
+    kw_counter = 1
 
     for idx, row in df.iterrows():
         work_id = str(row.get("id") or f"WORK_{idx}").strip()
@@ -55,7 +70,7 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
             "rights": rights
         })
 
-        # 1. Extracción de Autores y Afiliaciones desde dc.information.autoruc
+        # 1. Autores y Afiliaciones desde dc.information.autoruc
         autoruc_str = str(row.get("dc.information.autoruc") or "").strip()
         work_persons = []
         work_depts = set()
@@ -98,7 +113,7 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
                         edges_affiliated.add((p_key, d_id))
                         work_depts.add(d_id)
 
-        # 2. Extracción de Autores secundarios desde dc.contributor.author si no estaban en autoruc
+        # 2. Autores desde dc.contributor.author
         author_val = str(row.get("dc.contributor.author") or "").strip()
         if author_val:
             authors = [a.strip() for a in author_val.split("||") if a.strip()]
@@ -120,12 +135,11 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
                     work_persons.append(p_key)
                     edges_authored.append({"person_id": p_key, "work_id": work_id})
 
-        # Red de Co-autoría (Pares únicos de autores por publicación, cap en 30 para evitar explosión O(N^2) en mega-artículos)
+        # Red de Co-autoría (Cap 30 para evitar O(N^2))
         unique_work_persons = sorted(list(set(work_persons)))
         if len(unique_work_persons) <= 30:
             for p1, p2 in itertools.combinations(unique_work_persons, 2):
                 coauthorship_counts[(p1, p2)] += 1
-
 
         # Red de Colaboración Interdepartamental
         unique_work_depts = sorted(list(work_depts))
@@ -162,7 +176,62 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
             pub_id = nodes_publisher[publisher_name]["publisher_id"]
             edges_published_in.append({"work_id": work_id, "publisher_id": pub_id})
 
-    # Convert to DataFrames
+        # 6. EXTENDIDO: Agencias de Financiamiento (dc.description.funder)
+        if include_extended:
+            funder_str = str(row.get("dc.description.funder") or "").strip()
+            if funder_str:
+                funders = [f.strip() for f in funder_str.split("||") if f.strip()]
+                for f_name in funders:
+                    if f_name not in nodes_funder:
+                        nodes_funder[f_name] = {
+                            "funder_id": f"FUNDER_{funder_counter}",
+                            "name": f_name
+                        }
+                        funder_counter += 1
+                    f_id = nodes_funder[f_name]["funder_id"]
+                    edges_funded_by.append({"work_id": work_id, "funder_id": f_id})
+
+            # 7. EXTENDIDO: Tipo de Documento (dc.type)
+            doc_type = str(row.get("dc.type") or "").strip()
+            if doc_type:
+                if doc_type not in nodes_doctype:
+                    nodes_doctype[doc_type] = {
+                        "type_id": f"TYPE_{type_counter}",
+                        "name": doc_type
+                    }
+                    type_counter += 1
+                t_id = nodes_doctype[doc_type]["type_id"]
+                edges_has_type.append({"work_id": work_id, "type_id": t_id})
+
+            # 8. EXTENDIDO: Fuente de Indexación (sipa.index / dc.fuente.origen)
+            idx_source = str(row.get("sipa.index") or row.get("dc.fuente.origen") or "").strip()
+            if idx_source:
+                sources = [s.strip() for s in idx_source.split("||") if s.strip()]
+                for s_name in sources:
+                    if s_name not in nodes_source:
+                        nodes_source[s_name] = {
+                            "source_id": f"SRC_{source_counter}",
+                            "name": s_name
+                        }
+                        source_counter += 1
+                    src_id = nodes_source[s_name]["source_id"]
+                    edges_indexed_in.append({"work_id": work_id, "source_id": src_id})
+
+            # 9. EXTENDIDO: Palabras Clave / Temas (dc.subject[es_ES])
+            kw_str = str(row.get("dc.subject[es_ES]") or "").strip()
+            if kw_str:
+                keywords = [k.strip() for k in kw_str.split("||") if k.strip()]
+                for kw_name in keywords[:10]: # Limitar a 10 materias por obra
+                    if kw_name not in nodes_keyword:
+                        nodes_keyword[kw_name] = {
+                            "keyword_id": f"KW_{kw_counter}",
+                            "name": kw_name
+                        }
+                        kw_counter += 1
+                    k_id = nodes_keyword[kw_name]["keyword_id"]
+                    edges_has_keyword.append({"work_id": work_id, "keyword_id": k_id})
+
+    # DataFrames de Nodos
     df_nodes_work = pd.DataFrame(nodes_work)
     df_nodes_person = pd.DataFrame(list(nodes_person.values()))
     df_nodes_dept = pd.DataFrame(list(nodes_dept.values()))
@@ -170,6 +239,7 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
     df_nodes_ods = pd.DataFrame(list(nodes_ods.values()))
     df_nodes_publisher = pd.DataFrame(list(nodes_publisher.values()))
 
+    # DataFrames de Aristas
     df_edges_authored = pd.DataFrame(edges_authored).drop_duplicates()
     df_edges_affiliated = pd.DataFrame([{"person_id": p, "dept_id": d} for p, d in edges_affiliated])
     df_edges_coauthored = pd.DataFrame([
@@ -184,7 +254,7 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
         for (d1, d2), w in interdept_counts.items()
     ])
 
-    return {
+    result = {
         "nodes_work": df_nodes_work,
         "nodes_person": df_nodes_person,
         "nodes_department": df_nodes_dept,
@@ -199,3 +269,18 @@ def extract_graph_elements(df: pd.DataFrame) -> dict:
         "edges_published": df_edges_published,
         "edges_interdepartmental": df_edges_interdept,
     }
+
+    if include_extended:
+        result.update({
+            "nodes_funder": pd.DataFrame(list(nodes_funder.values())),
+            "nodes_doctype": pd.DataFrame(list(nodes_doctype.values())),
+            "nodes_source": pd.DataFrame(list(nodes_source.values())),
+            "nodes_keyword": pd.DataFrame(list(nodes_keyword.values())),
+            "edges_funded_by": pd.DataFrame(edges_funded_by).drop_duplicates(),
+            "edges_has_type": pd.DataFrame(edges_has_type).drop_duplicates(),
+            "edges_indexed_in": pd.DataFrame(edges_indexed_in).drop_duplicates(),
+            "edges_has_keyword": pd.DataFrame(edges_has_keyword).drop_duplicates(),
+        })
+
+    return result
+
