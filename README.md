@@ -1,3 +1,5 @@
+[Portada](scr/Grupo-11-Proyecto-SIPA.png)
+
 # VRID-AlumniUC - Branch Feña
 ----
 ## Uniendo, Estandarizando y limpiando datos
