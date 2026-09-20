@@ -1,1 +1,1 @@
-# VRID-AlumniUC
+![Portada](scr/Grupo-11-Proyecto-SIPA.png)
