@@ -1,4 +1,4 @@
-[Portada](scr/Grupo-11-Proyecto-SIPA.png)
+![Portada](scr/Grupo-11-Proyecto-SIPA.png)
 
 # VRID-AlumniUC - Branch Feña
 ----
