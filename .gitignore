@@ -14,11 +14,17 @@ SIPA_data.csv
 .devcontainer/
 devcontainer-template.json
 .byebug_history
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
 
-# Exploratory notebook
+# Exploratory notebooks
 /exploratory.ipynb
 
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
-

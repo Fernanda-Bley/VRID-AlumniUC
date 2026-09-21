@@ -1,17 +1,25 @@
-# Pipeline SIPA - Limpieza y Normalización de Datos
+![Portada](scr/Grupo-11-Proyecto-SIPA.png)
 
-Este repositorio contiene el pipeline modular para la limpieza, reparación estructural, recuperación de autores ausentes y normalización del dataset **EXPORT_SIPA**.
+# VRID-AlumniUC - Proyecto SIPA
+----
+## Uniendo, Estandarizando, Limpiando Datos y Construcción del Grafo de Conocimiento (Neo4j)
+
+> Avances y análisis exploratorios disponibles en [`data-analisis.ipynb`](data-analisis.ipynb).
 
 ---
 
 ## 📁 Estructura del Proyecto (`src/` y `scripts/`)
 
-- `scripts/clean_sipa.py`: Script principal ejecutable que corre el pipeline completo en memoria basado en Pandas.
+- `scripts/clean_sipa.py`: Script principal ejecutable que corre el pipeline completo de limpieza en memoria basado en Pandas.
+- `scripts/build_graph.py`: Extractor y generador de nodos, relaciones y formateador para Neo4j (`Cypher` y `bulk import`).
+- `scripts/load_to_neo4j.py`: Ingestador masivo en Neo4j mediante la librería oficial de Python (`neo4j` driver).
+- `scripts/generate_graph_charts.py`: Generador de visualizaciones analíticas y grafo interactivo 3D HTML.
 - `src/simple_clean.py`: Orquestador de limpieza base, desduplicación de celdas multivalor y recuperación de títulos por fallback.
 - `src/author_linkage/`: Módulo de recuperación Nivel 1 de autores faltantes mediante catálogo hash de personas UC.
 - `src/normalize_categories/`: Módulo de normalización de códigos Dewey (DDC), ODS bilingües y materias.
 - `src/language_normalization/`: Módulo de estandarización de idiomas a ISO 639-1 (`en`, `es`).
 - `src/rights_normalization/`: Módulo de unificación de derechos y permisos de acceso (`acceso abierto`, `acceso restringido`).
+- `src/graph_builder/`: Módulo extractor de elementos de grafo (10 tipos de nodos y 11 tipos de relaciones).
 - `src/CONFIG.py`: Configuración global, rutas relativas y tabla de mapeo Mojibake.
 
 ---
@@ -39,22 +47,40 @@ Este repositorio contiene el pipeline modular para la limpieza, reparación estr
 
 ---
 
-## 🚀 Ejecución del Pipeline de Limpieza
+## 📊 Grafo de Conocimiento en Neo4j
 
-Desde la raíz del proyecto:
-
-```bash
-python scripts/clean_sipa.py
-```
-
-- **Entrada**: `data/EXPORT_SIPA(in).csv` (637,49 MB)
-- **Salida**: `data/EXPORT_SIPA_clean.csv` (254,41 MB, UTF-8 con BOM)
-- **Tiempo de ejecución**: ~82 segundos (139.688 filas x 232 columnas)
+* **Total Nodos**: **576,299** (`:Work`, `:Person`, `:Department`, `:Dewey`, `:ODS`, `:Publisher`, `:Funder`, `:Doctype`, `:Source`, `:Keyword`)
+* **Total Relaciones**: **2,490,546** (`AUTHORED`, `CO_AUTHORED_WITH`, `AFFILIATED_TO`, `CLASSIFIED_IN`, `CONTRIBUTES_TO_ODS`, `PUBLISHED_IN`, `COLLABORATES_WITH`, `FUNDED_BY`, `HAS_TYPE`, `INDEXED_IN`, `HAS_KEYWORD`)
+* **Documentación Completa**: Consulte [`docs/DOCUMENTACION_GRAFO_NEO4J.md`](docs/DOCUMENTACION_GRAFO_NEO4J.md).
 
 ---
 
-## 📄 Logs de Auditoría (`data/`)
+## 🚀 Ejecución del Pipeline Completo
+
+Desde la raíz del proyecto:
+
+1. **Limpieza y Normalización**:
+   ```bash
+   python scripts/clean_sipa.py
+   ```
+2. **Construcción de Archivos del Grafo**:
+   ```bash
+   python scripts/build_graph.py
+   ```
+3. **Carga en Neo4j Local**:
+   ```bash
+   python scripts/load_to_neo4j.py
+   ```
+4. **Generación de Gráficos Analíticos**:
+   ```bash
+   python scripts/generate_graph_charts.py
+   ```
+
+---
+
+## 📄 Logs de Auditoría e Informes (`data/` y `docs/`)
 
 - `data/EXPORT_SIPA_null_columns.log`: Registro de columnas eliminadas por estar 100% vacías.
 - `data/EXPORT_SIPA_missing_titles.log`: Registro de los 1.379 registros sin título tras aplicar fallbacks.
 - `docs/REPORTE_CALIDAD_Y_NORMALIZACION_SIPA.md`: Informe formal detallado de métricas y hallazgos.
+- `docs/DOCUMENTACION_GRAFO_NEO4J.md`: Esquema del grafo, taxonomía de relaciones y consultas Cypher.
