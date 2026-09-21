@@ -55,8 +55,14 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
     kw_counter = 1
 
     for idx, row in df.iterrows():
-        work_id = str(row.get("id") or f"WORK_{idx}").strip()
+        raw_id = str(row.get("id") or "").strip()
+        if raw_id and len(raw_id) <= 60 and "||" not in raw_id and " " not in raw_id:
+            work_id = raw_id
+        else:
+            work_id = f"WORK_{idx}"
+
         title = str(row.get("dc.title") or "").strip()
+
         issued_date = str(row.get("dc.date.issued") or "").strip()
         issued_year = issued_date[:4] if len(issued_date) >= 4 and issued_date[:4].isdigit() else ""
         doi = str(row.get("dc.identifier.doi") or "").strip()
