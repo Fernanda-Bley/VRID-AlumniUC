@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, "src"))
 
 from simple_clean import clean_df
 from author_linkage import build_codpers_map_from_df
+from configure_document import normalize_row
 
 
 ARCHIVO_ORIGEN = os.path.join(BASE_DIR, "data", "EXPORT_SIPA(in).csv")
@@ -34,7 +35,7 @@ inicio = time.time()
 tamano_origen = os.path.getsize(ARCHIVO_ORIGEN)
 
 # PASO 1: Carga y Alineación Estructural en un DataFrame de Pandas
-print("\n[Paso 1/4] Cargando y alineando filas del CSV origen a un DataFrame de Pandas...")
+print("\n[Paso 1/4] Cargando, integrando columnas [] y alineando filas a un DataFrame de Pandas...")
 filas_alineadas = []
 
 with open(ARCHIVO_ORIGEN, 'r', encoding='utf-8-sig', errors='replace', newline='') as f_in:
@@ -59,6 +60,7 @@ with open(ARCHIVO_ORIGEN, 'r', encoding='utf-8-sig', errors='replace', newline='
             fila_limpia = inicio_fila + [texto_autores] + final_fila
             fila_limpia.extend([""] * (COLUMNAS_VALIDAS - len(fila_limpia)))
 
+        fila_limpia = normalize_row(fila_limpia, encabezado)
         filas_alineadas.append(fila_limpia)
 
 # Crear DataFrame de Pandas con las 232 columnas oficiales
