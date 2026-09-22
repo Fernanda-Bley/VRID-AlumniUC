@@ -83,4 +83,5 @@ Desde la raíz del proyecto:
 - `data/EXPORT_SIPA_null_columns.log`: Registro de columnas eliminadas por estar 100% vacías.
 - `data/EXPORT_SIPA_missing_titles.log`: Registro de los 1.379 registros sin título tras aplicar fallbacks.
 - `docs/REPORTE_CALIDAD_Y_NORMALIZACION_SIPA.md`: Informe formal detallado de métricas y hallazgos.
+- `docs/REPORTE_CALIDAD_Y_NORMALIZACION_SIPA.md`: Informe formal detallado de métricas y hallazgos.
 - `docs/DOCUMENTACION_GRAFO_NEO4J.md`: Esquema del grafo, taxonomía de relaciones y consultas Cypher.
