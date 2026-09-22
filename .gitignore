@@ -14,6 +14,7 @@ SIPA_data.csv
 .devcontainer/
 devcontainer-template.json
 .byebug_history
+
 /coverage/
 /InstalledFiles
 /pkg/
@@ -28,3 +29,24 @@ devcontainer-template.json
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
+*.pyc
+
+## Specific to RubyMotion:
+.dat*
+.repl_history
+build/
+*.bridgesupport
+build-iPhoneOS/
+build-iPhoneSimulator/
+
+## Documentation cache and generated files:
+/.yardoc/
+/_yardoc/
+/doc/
+/rdoc/
+
+## Environment normalization:
+/.bundle/
+/vendor/bundle
+/lib/bundler/man/
+.rvmrc

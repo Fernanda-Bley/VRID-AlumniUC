@@ -94,6 +94,7 @@ def has_missing_title(cleaned_row, title_index):
     return title_index is not None and not cleaned_row[title_index].strip()
 
 
+<<<<<<< HEAD
 from author_linkage import (
     build_codpers_map,
     build_codpers_map_from_df,
@@ -108,19 +109,27 @@ import pandas as pd
 
 def clean_rows(header, rows):
     """Clean all rows, recover missing authors, normalize categories/Dewey, languages, and rights.
+=======
+def clean_rows(header, rows):
+    """Clean all rows and detect which ones ended up without a title.
+>>>>>>> origin/branch-fer
 
     Returns (cleaned_rows, missing_title_ids).
     """
     author_indexes = find_author_indexes(header)
     title_index = find_title_index(header)
 
+<<<<<<< HEAD
     # 1. Construir catálogo global de personas UC para recuperación de autores Nivel 1
     codpers_map = build_codpers_map(header, rows)
 
+=======
+>>>>>>> origin/branch-fer
     cleaned_rows = []
     missing_titles = []
 
     for row in rows:
+<<<<<<< HEAD
         # A. Limpieza de valores base y títulos de fallback
         cleaned = clean_row(row, header, author_indexes, title_index)
 
@@ -139,11 +148,17 @@ def clean_rows(header, rows):
         if has_missing_title(cleaned, title_index):
             missing_titles.append(row[0])
             
+=======
+        cleaned = clean_row(row, header, author_indexes, title_index)
+        if has_missing_title(cleaned, title_index):
+            missing_titles.append(row[0])
+>>>>>>> origin/branch-fer
         cleaned_rows.append(cleaned)
 
     return cleaned_rows, missing_titles
 
 
+<<<<<<< HEAD
 def clean_df(df: pd.DataFrame, codpers_map: dict = None) -> tuple:
     """
     Limpia y normaliza un DataFrame de Pandas integrando todos los módulos:
@@ -215,6 +230,8 @@ def drop_empty_columns_df(df: pd.DataFrame) -> tuple:
 
 
 
+=======
+>>>>>>> origin/branch-fer
 def drop_empty_columns(header, rows):
     """Remove columns where every row ended up empty.
 
