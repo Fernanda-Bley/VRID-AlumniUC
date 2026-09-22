@@ -57,15 +57,26 @@ def normalize_row(row, header):
     values.extend([""] * (len(header) - len(values)))
     for index, name in enumerate(header):
         if name.endswith("[]"):
+            base_name = name[:-2]
+            if base_name in header:
+                base_index = header.index(base_name)
+                b_val = values[index].strip()
+                if b_val:
+                    k_val = values[base_index].strip()
+                    if k_val:
+                        values[base_index] = f"{k_val}||{b_val}"
+                    else:
+                        values[base_index] = b_val
             values[index] = ""
 
-    abstract_index = header.index("dc.description.abstract")
-    language_abstract_name = "dc.description.abstract[es_CL]"
-    if language_abstract_name in header:
-        language_abstract_index = header.index(language_abstract_name)
-        if values[abstract_index] and values[language_abstract_index]:
-            values[abstract_index] += " " + values[language_abstract_index]
-            values[language_abstract_index] = ""
+    if "dc.description.abstract" in header:
+        abstract_index = header.index("dc.description.abstract")
+        language_abstract_name = "dc.description.abstract[es_CL]"
+        if language_abstract_name in header:
+            language_abstract_index = header.index(language_abstract_name)
+            if values[abstract_index] and values[language_abstract_index]:
+                values[abstract_index] += " " + values[language_abstract_index]
+                values[language_abstract_index] = ""
 
     return values
 
