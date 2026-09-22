@@ -9,6 +9,7 @@ SOURCE = DATA / "EXPORT_SIPA(in).csv"
 OUTPUT = DATA / "EXPORT_SIPA_clean.csv"
 NULL_COLUMNS_LOG = DATA / "EXPORT_SIPA_null_columns.log"
 MISSING_TITLES_LOG = DATA / "EXPORT_SIPA_missing_titles.log"
+DUPLICATES_LOG = DATA / "EXPORT_SIPA_duplicates.log"
 FOLDED_ROWS_LOG = DATA / "EXPORT_SIPA_folded_rows.log"
 EXPECTED_COLUMNS = 232
 ENCODING = "utf-8-sig"

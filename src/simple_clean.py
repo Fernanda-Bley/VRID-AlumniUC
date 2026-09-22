@@ -2,7 +2,8 @@
 
 import csv
 
-from CONFIG import FIELD_SIZE_LIMIT, MOJIBAKE_REPLACEMENTS, SOURCE, TITLE_FALLBACK_FIELDS
+from CONFIG import MOJIBAKE_REPLACEMENTS, SOURCE, TITLE_FALLBACK_FIELDS
+from clean_duplicates import deduplicate_rows, match_key, standardize_delimited
 
 
 #cleaning functions
@@ -36,14 +37,7 @@ def _fix_mojibake(value):
 
 def deduplicate_delimited(value, delimiter="||"):
     """Remove duplicates within a field of delimiter-separated values."""
-    seen = set()
-    result = []
-    for item in value.split(delimiter):
-        item = item.strip()
-        if item and item not in seen:
-            seen.add(item)
-            result.append(item)
-    return delimiter.join(result)
+    return standardize_delimited(value, delimiter)
 
 
 def find_author_indexes(header):
@@ -94,7 +88,6 @@ def has_missing_title(cleaned_row, title_index):
     return title_index is not None and not cleaned_row[title_index].strip()
 
 
-<<<<<<< HEAD
 from author_linkage import (
     build_codpers_map,
     build_codpers_map_from_df,
@@ -109,27 +102,19 @@ import pandas as pd
 
 def clean_rows(header, rows):
     """Clean all rows, recover missing authors, normalize categories/Dewey, languages, and rights.
-=======
-def clean_rows(header, rows):
-    """Clean all rows and detect which ones ended up without a title.
->>>>>>> origin/branch-fer
 
     Returns (cleaned_rows, missing_title_ids).
     """
     author_indexes = find_author_indexes(header)
     title_index = find_title_index(header)
 
-<<<<<<< HEAD
     # 1. Construir catálogo global de personas UC para recuperación de autores Nivel 1
     codpers_map = build_codpers_map(header, rows)
 
-=======
->>>>>>> origin/branch-fer
     cleaned_rows = []
     missing_titles = []
 
     for row in rows:
-<<<<<<< HEAD
         # A. Limpieza de valores base y títulos de fallback
         cleaned = clean_row(row, header, author_indexes, title_index)
 
@@ -147,18 +132,11 @@ def clean_rows(header, rows):
 
         if has_missing_title(cleaned, title_index):
             missing_titles.append(row[0])
-            
-=======
-        cleaned = clean_row(row, header, author_indexes, title_index)
-        if has_missing_title(cleaned, title_index):
-            missing_titles.append(row[0])
->>>>>>> origin/branch-fer
         cleaned_rows.append(cleaned)
 
     return cleaned_rows, missing_titles
 
 
-<<<<<<< HEAD
 def clean_df(df: pd.DataFrame, codpers_map: dict = None) -> tuple:
     """
     Limpia y normaliza un DataFrame de Pandas integrando todos los módulos:
@@ -228,18 +206,19 @@ def drop_empty_columns_df(df: pd.DataFrame) -> tuple:
     return df_filtered, empty_cols
 
 
-
-
-=======
->>>>>>> origin/branch-fer
-def drop_empty_columns(header, rows):
-    """Remove columns where every row ended up empty.
+def drop_empty_columns(header, rows, null_threshold=0.99):
+    """Remove columns whose empty-value ratio meets ``null_threshold``.
 
     Returns (filtered_header, filtered_rows, removed_columns).
     """
+    if not 0 <= null_threshold <= 1:
+        raise ValueError("null_threshold must be between 0 and 1")
+
+    row_count = len(rows)
     kept_indexes = [
         index for index, name in enumerate(header)
-        if any(row[index].strip() for row in rows)
+        if row_count == 0
+        or sum(not row[index].strip() for row in rows) / row_count < null_threshold
     ]
     removed_columns = [
         name for index, name in enumerate(header) if index not in kept_indexes
@@ -250,6 +229,10 @@ def drop_empty_columns(header, rows):
 
     return filtered_header, filtered_rows, removed_columns
 
+
+def delete_empty_rows(rows):
+    """Remove rows where every column is empty."""
+    return [row for row in rows if any(value.strip() for value in row)]
 
 # Writing results
 def write_csv(path, header, rows):
@@ -268,22 +251,3 @@ def write_log(path, title, items):
         log.writelines(f"{item!r}\n" for item in items)
 
 
-# Orchestrator
-def clean_records(header, rows, output, null_columns_log, missing_title_log):
-    """Clean the rows, write the CSV and the logs. Return a summary dict."""
-    csv.field_size_limit(FIELD_SIZE_LIMIT)
-
-    cleaned_rows, missing_titles = clean_rows(header, rows)
-    clean_header, final_rows, removed_columns = drop_empty_columns(header, cleaned_rows)
-
-    write_csv(output, clean_header, final_rows)
-    write_log(null_columns_log, "Removed columns", removed_columns)
-    write_log(missing_title_log, "Rows without dc.title", missing_titles)
-
-    return {
-        "rows": len(final_rows),
-        "input_columns": len(header),
-        "output_columns": len(clean_header),
-        "removed_columns": len(removed_columns),
-        "missing_titles": len(missing_titles),
-    }

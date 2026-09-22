@@ -4,12 +4,9 @@
 ----
 ## Uniendo, Estandarizando, Limpiando Datos y Construcción del Grafo de Conocimiento (Neo4j)
 
-> Avances y análisis exploratorios disponibles en [`data-analisis.ipynb`](data-analisis.ipynb).
-
 ---
 
 ## 📁 Estructura del Proyecto (`src/` y `scripts/`)
-
 - `scripts/clean_sipa.py`: Script principal ejecutable que corre el pipeline completo de limpieza en memoria basado en Pandas.
 - `scripts/build_graph.py`: Extractor y generador de nodos, relaciones y formateador para Neo4j (`Cypher` y `bulk import`).
 - `scripts/load_to_neo4j.py`: Ingestador masivo en Neo4j mediante la librería oficial de Python (`neo4j` driver).
@@ -21,6 +18,21 @@
 - `src/rights_normalization/`: Módulo de unificación de derechos y permisos de acceso (`acceso abierto`, `acceso restringido`).
 - `src/graph_builder/`: Módulo extractor de elementos de grafo (10 tipos de nodos y 11 tipos de relaciones).
 - `src/CONFIG.py`: Configuración global, rutas relativas y tabla de mapeo Mojibake.
+=======
+1. Reconstruye las filas partidas y realinea sus columnas originales.
+2. Limpia valores vacíos y artefactos de doble codificación en títulos.
+3. Deduplica valores delimitados de autores conservando su orden.
+4. Completa `dc.title` con un campo alternativo cuando corresponde.
+5. Elimina columnas con 99 % o más de valores nulos y registra sus nombres.
+6. Elimina filas completamente vacías.
+7. Conserva los registros sin título y los registra en un log.
+   
+   %Importante!! esta es una deduplicación inicial, se modificará cuando se decida el esquema.
+   
+8. Deduplica registros solo cuando comparten un identificador fuerte normalizado.
+9.  Fusiona las filas duplicadas campo a campo para conservar la máxima información.
+10. Estandariza autores delimitados en minúsculas y elimina variantes repetidas.
+>>>>>>> origin/maira
 
 ---
 
@@ -81,7 +93,7 @@ Desde la raíz del proyecto:
 ## 📄 Logs de Auditoría e Informes (`data/` y `docs/`)
 
 - `data/EXPORT_SIPA_null_columns.log`: Registro de columnas eliminadas por estar 100% vacías.
-- `data/EXPORT_SIPA_missing_titles.log`: Registro de los 1.379 registros sin título tras aplicar fallbacks.
-- `docs/REPORTE_CALIDAD_Y_NORMALIZACION_SIPA.md`: Informe formal detallado de métricas y hallazgos.
+- `data/EXPORT_SIPA_missing_titles.log`: Registro de los registros sin título tras aplicar fallbacks.
+- `data/EXPORT_SIPA_duplicates.log`: Registro CSV de deduplicación de publicaciones por identificador (DOI, URI, ISBN).
 - `docs/REPORTE_CALIDAD_Y_NORMALIZACION_SIPA.md`: Informe formal detallado de métricas y hallazgos.
 - `docs/DOCUMENTACION_GRAFO_NEO4J.md`: Esquema del grafo, taxonomía de relaciones y consultas Cypher.
