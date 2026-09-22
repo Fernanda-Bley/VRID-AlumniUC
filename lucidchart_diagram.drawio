@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+<mxfile host="Electron" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="page1" name="Grafo Neo4j SIPA">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="WORK" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;WORK (Publicación)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;work_id (PK)&lt;/b&gt;: string&lt;br&gt;• title: string [100%]&lt;br&gt;• type_id (FK): string&lt;br&gt;• issued_year: string [95%]&lt;br&gt;• doi: string [47.3%]&lt;br&gt;• language_iso: string [55.2%]&lt;br&gt;• rights: string [44.6%]&lt;br&gt;• abstract: text [42.1%]&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FF;strokeColor=#0052CC;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="520" y="300" width="260" height="240" as_="geometry"/>
+        </mxCell>
+        <mxCell id="AUTHOR" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;AUTHOR (Person)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;person_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string [97.5%]&lt;br&gt;• codpers: string [82.0%]&lt;br&gt;• is_uc: boolean [78.6%]&lt;br&gt;• orcid: string [1.1%]&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#137333;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="120" y="140" width="250" height="170" as_="geometry"/>
+        </mxCell>
+        <mxCell id="INSTITUTION" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;INSTITUTION (Department)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;dept_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string [100%]&lt;br&gt;• cod_ua: string [78.3%]&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FD;strokeColor=#7627BB;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="120" y="480" width="250" height="140" as_="geometry"/>
+        </mxCell>
+        <mxCell id="SOURCE" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;SOURCE (Revista / Index)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;source_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string (dc.revista)&lt;br&gt;• issn: string (dc.identifier.issn)&lt;br&gt;• index: string (Scopus, WoS, PubMed)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F7FA;strokeColor=#00838F;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="520" y="40" width="260" height="150" as_="geometry"/>
+        </mxCell>
+        <mxCell id="PUBLISHER" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;PUBLISHER (Editorial)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;publisher_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string (dc.publisher)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="920" y="40" width="250" height="120" as_="geometry"/>
+        </mxCell>
+        <mxCell id="DEWEY" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;DEWEY (Clasificación)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;dewey_code (PK)&lt;/b&gt;: string&lt;br&gt;• name_es: string (dc.subject.dewey)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#F57F17;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="920" y="190" width="250" height="120" as_="geometry"/>
+        </mxCell>
+        <mxCell id="ODS" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;ODS (Objetivos ONU)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;ods_code (PK)&lt;/b&gt;: string (01-17)&lt;br&gt;• name_en: string (dc.subject.ods)&lt;br&gt;• name_es: string (dc.subject.odspa)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="920" y="340" width="250" height="140" as_="geometry"/>
+        </mxCell>
+        <mxCell id="KEYWORD" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;KEYWORD (Palabras Clave)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;keyword_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string (dc.subject.other)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="920" y="510" width="250" height="120" as_="geometry"/>
+        </mxCell>
+        <mxCell id="DOCTYPE" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;DOCTYPE (Tipo Documento)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;type_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string (dc.type)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#424242;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="920" y="660" width="250" height="120" as_="geometry"/>
+        </mxCell>
+        <mxCell id="FUNDER" value="&lt;div style='text-align: center;'&gt;&lt;b&gt;FUNDER (Financiamiento)&lt;/b&gt;&lt;/div&gt;&lt;hr style='margin: 4px 0;'&gt;&lt;div style='text-align: left;'&gt;• &lt;b&gt;funder_id (PK)&lt;/b&gt;: string&lt;br&gt;• name: string (dc.description.funder)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="520" y="630" width="260" height="130" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_authored" value="AUTHORED" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="AUTHOR" target="WORK" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_coauthored" value="CO_AUTHORED_WITH {weight}" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="AUTHOR" target="AUTHOR" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_affiliated" value="AFFILIATED_TO" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="AUTHOR" target="INSTITUTION" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_collaborates" value="COLLABORATES_WITH {weight}" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="INSTITUTION" target="INSTITUTION" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_indexed" value="INDEXED_IN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="SOURCE" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_published" value="PUBLISHED_IN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="PUBLISHER" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_classified" value="CLASSIFIED_IN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="DEWEY" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_ods" value="CONTRIBUTES_TO_ODS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="ODS" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_keyword" value="HAS_KEYWORD" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="KEYWORD" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_doctype" value="HAS_TYPE" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="DOCTYPE" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+        <mxCell id="edge_funded" value="FUNDED_BY" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#1A73E8;strokeWidth=2;fontSize=11;fontStyle=1;labelBackgroundColor=#FFFFFF;" parent="1" source="WORK" target="FUNDER" edge="1">
+          <mxGeometry relative="1" as_="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

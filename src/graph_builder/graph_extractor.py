@@ -3,10 +3,59 @@ Módulo de Extracción y Construcción del Grafo de Conocimiento (VRID-AlumniUC)
 Ubicación: src/graph_builder/graph_extractor.py
 """
 
+import re
 import pandas as pd
 from collections import defaultdict
 import itertools
 from author_linkage import parse_autoruc_block
+
+MOJIBAKE_MAP = {
+    "\xad": "í",
+    "\ufffd\xad": "í",
+    "\ufffd\x81": "Á",
+    "\x81": "Á",
+    "\ufffd\x84": "ń",
+    "\x84": "ń",
+    "\ufffd\x80\x99": "'",
+    "\x80\x99": "'",
+    "Ã¡": "á", "Ã©": "é", "Ã­": "í", "Ã³": "ó", "Ãº": "ú",
+    "Ã±": "ñ", "Ã¼": "ü", "Ã€": "À", "Ã‰": "É", "Ã‘": "Ñ",
+    "Â¿": "¿", "Â¡": "¡", "Â«": "«", "Â»": "»", "Â": "",
+    "â€™": "’", "â€œ": "“", "â€ ": "”", "â€“": "–", "â€”": "—",
+    "â€¦": "…", "â†’": "→", "âˆš": "√",
+    "√°": "á", "√©": "é", "√≠": "í", "√≥": "ó", "√∫": "ú", "√±": "ñ",
+}
+
+REGEX_NAME_REPLACEMENTS = [
+    (re.compile(r'\bGarc[\ufffd]?da\b', re.I), "García"),
+    (re.compile(r'\bGarc[\ufffd]?a\b', re.I), "García"),
+    (re.compile(r'\bD[\ufffd]?az\b', re.I), "Díaz"),
+    (re.compile(r'\bLarra[\ufffd]?n\b', re.I), "Larraín"),
+    (re.compile(r'\bManr[\ufffd]?quez\b', re.I), "Manríquez"),
+    (re.compile(r'\bSald[\ufffd]?as\b', re.I), "Saldías"),
+    (re.compile(r'\bMar[\ufffd]?n\b', re.I), "Marín"),
+    (re.compile(r'\bCant[\ufffd]?n\b', re.I), "Cantín"),
+    (re.compile(r'[\ufffd]?lvaro', re.I), "Álvaro"),
+    (re.compile(r'[\ufffd]?ngel', re.I), "Ángel"),
+    (re.compile(r'[\ufffd]?lamos', re.I), "Álamos"),
+]
+
+def sanitize_clean_string(text: str) -> str:
+    if not text or not isinstance(text, str):
+        return ""
+    text = str(text).strip()
+    if "Ã" in text or "Â" in text or "√" in text:
+        try:
+            text = text.encode("latin-1").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+    for broken, fixed in MOJIBAKE_MAP.items():
+        if broken in text:
+            text = text.replace(broken, fixed)
+    for pat, rep in REGEX_NAME_REPLACEMENTS:
+        text = pat.sub(rep, text)
+    text = text.replace("\ufffd", "").replace("", "").strip()
+    return text
 
 
 def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> dict:
@@ -61,12 +110,12 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
         else:
             work_id = f"WORK_{idx}"
 
-        title = str(row.get("dc.title") or "").strip()
+        title = sanitize_clean_string(str(row.get("dc.title") or ""))
 
         issued_date = str(row.get("dc.date.issued") or "").strip()
         issued_year = issued_date[:4] if len(issued_date) >= 4 and issued_date[:4].isdigit() else ""
-        doi = str(row.get("dc.identifier.doi") or "").strip()
-        rights = str(row.get("dc.rights.spa") or "").strip()
+        doi = sanitize_clean_string(str(row.get("dc.identifier.doi") or ""))
+        rights = sanitize_clean_string(str(row.get("dc.rights.spa") or ""))
 
         nodes_work.append({
             "work_id": work_id,
@@ -84,10 +133,10 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
         if autoruc_str:
             records = parse_autoruc_block(autoruc_str)
             for r in records:
-                a_name = r.get("autor", "").strip()
+                a_name = sanitize_clean_string(r.get("autor", ""))
                 c_id = r.get("codpers", "").strip()
                 orcid = r.get("orcid", "").strip()
-                dept_name = r.get("unidad", "").strip()
+                dept_name = sanitize_clean_string(r.get("unidad", ""))
 
                 if a_name:
                     p_key = c_id if c_id else f"NAME_{a_name.lower()}"
@@ -122,7 +171,7 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
         # 2. Autores desde dc.contributor.author
         author_val = str(row.get("dc.contributor.author") or "").strip()
         if author_val:
-            authors = [a.strip() for a in author_val.split("||") if a.strip()]
+            authors = [sanitize_clean_string(a) for a in author_val.split("||") if sanitize_clean_string(a)]
             codpers_val = str(row.get("sipa.codpersvinculados") or "").strip()
             c_ids = [c.strip() for c in codpers_val.split("||") if c.strip()]
 
@@ -154,15 +203,15 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
 
         # 3. Clasificación Dewey
         ddc_code = str(row.get("dc.subject.ddc") or "").strip()
-        dewey_name = str(row.get("dc.subject.dewey[es_ES]") or "").strip()
+        dewey_name = sanitize_clean_string(str(row.get("dc.subject.dewey[es_ES]") or ""))
         if ddc_code:
             if ddc_code not in nodes_dewey:
                 nodes_dewey[ddc_code] = {"dewey_code": ddc_code, "name_es": dewey_name}
             edges_classified_in.append({"work_id": work_id, "dewey_code": ddc_code})
 
         # 4. Objetivos ODS
-        ods_en = str(row.get("dc.subject.ods") or "").strip()
-        ods_es = str(row.get("dc.subject.odspa") or "").strip()
+        ods_en = sanitize_clean_string(str(row.get("dc.subject.ods") or ""))
+        ods_es = sanitize_clean_string(str(row.get("dc.subject.odspa") or ""))
         if ods_en or ods_es:
             ods_key = ods_en[:2] if ods_en and ods_en[:2].isdigit() else (ods_es[:2] if ods_es and ods_es[:2].isdigit() else ods_en)
             if ods_key:
@@ -171,7 +220,7 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
                 edges_addresses_ods.append({"work_id": work_id, "ods_code": ods_key})
 
         # 5. Editoriales / Publishers
-        publisher_name = str(row.get("dc.publisher") or "").strip()
+        publisher_name = sanitize_clean_string(str(row.get("dc.publisher") or ""))
         if publisher_name:
             if publisher_name not in nodes_publisher:
                 nodes_publisher[publisher_name] = {
@@ -186,7 +235,7 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
         if include_extended:
             funder_str = str(row.get("dc.description.funder") or "").strip()
             if funder_str:
-                funders = [f.strip() for f in funder_str.split("||") if f.strip()]
+                funders = [sanitize_clean_string(f) for f in funder_str.split("||") if sanitize_clean_string(f)]
                 for f_name in funders:
                     if f_name not in nodes_funder:
                         nodes_funder[f_name] = {
@@ -198,7 +247,7 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
                     edges_funded_by.append({"work_id": work_id, "funder_id": f_id})
 
             # 7. EXTENDIDO: Tipo de Documento (dc.type)
-            doc_type = str(row.get("dc.type") or "").strip()
+            doc_type = sanitize_clean_string(str(row.get("dc.type") or ""))
             if doc_type:
                 if doc_type not in nodes_doctype:
                     nodes_doctype[doc_type] = {
@@ -212,7 +261,7 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
             # 8. EXTENDIDO: Fuente de Indexación (sipa.index / dc.fuente.origen)
             idx_source = str(row.get("sipa.index") or row.get("dc.fuente.origen") or "").strip()
             if idx_source:
-                sources = [s.strip() for s in idx_source.split("||") if s.strip()]
+                sources = [sanitize_clean_string(s) for s in idx_source.split("||") if sanitize_clean_string(s)]
                 for s_name in sources:
                     if s_name not in nodes_source:
                         nodes_source[s_name] = {
@@ -223,10 +272,10 @@ def extract_graph_elements(df: pd.DataFrame, include_extended: bool = True) -> d
                     src_id = nodes_source[s_name]["source_id"]
                     edges_indexed_in.append({"work_id": work_id, "source_id": src_id})
 
-            # 9. EXTENDIDO: Palabras Clave / Temas (dc.subject[es_ES])
-            kw_str = str(row.get("dc.subject[es_ES]") or "").strip()
+            # 9. EXTENDIDO: Palabras Clave / Temas (dc.subject[es_ES] y dc.subject.other[es_ES])
+            kw_str = str(row.get("dc.subject[es_ES]") or row.get("dc.subject.other[es_ES]") or row.get("dc.subject.other") or "").strip()
             if kw_str:
-                keywords = [k.strip() for k in kw_str.split("||") if k.strip()]
+                keywords = [sanitize_clean_string(k) for k in kw_str.split("||") if sanitize_clean_string(k)]
                 for kw_name in keywords[:10]: # Limitar a 10 materias por obra
                     if kw_name not in nodes_keyword:
                         nodes_keyword[kw_name] = {

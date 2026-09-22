@@ -14,15 +14,22 @@ from .dewey_mapping import (
 
 def clean_mojibake_text(text: str) -> str:
     """Corrige caracteres corruptos por doble decodificación UTF-8 / Latin-1."""
-    if not text:
+    if not text or not isinstance(text, str):
         return ""
     
-    # Reemplazo de mapa estático
+    # 1. Intentar revertir doble codificación UTF-8
+    if "Ã" in text or "Â" in text or "√" in text:
+        try:
+            text = text.encode("latin-1").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+
+    # 2. Reemplazo estático
     for broken, fixed in CATEGORY_MOJIBAKE.items():
         if broken in text:
             text = text.replace(broken, fixed)
             
-    # Casos comunes de 'Religin' -> 'Religión'
+    # Casos comunes
     text = text.replace("Religin", "Religión")
     text = text.replace("Ingeniera", "Ingeniería")
     text = text.replace("Astronoma", "Astronomía")
