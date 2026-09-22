@@ -37,7 +37,7 @@ tamano_origen = os.path.getsize(ARCHIVO_ORIGEN)
 print("\n[Paso 1/4] Cargando y alineando filas del CSV origen a un DataFrame de Pandas...")
 filas_alineadas = []
 
-with open(ARCHIVO_ORIGEN, 'r', encoding='latin-1', errors='replace', newline='') as f_in:
+with open(ARCHIVO_ORIGEN, 'r', encoding='utf-8-sig', errors='replace', newline='') as f_in:
     lector = csv.reader(f_in)
     encabezado = next(lector)[:COLUMNAS_VALIDAS]
 

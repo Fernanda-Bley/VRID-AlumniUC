@@ -41,7 +41,7 @@ def clean_mojibake_text(text: str) -> str:
     text = text.replace("Matemticas", "Matemáticas")
     text = text.replace("Filosofa", "Filosofía")
     text = text.replace("Psicologa", "Psicología")
-    text = text.replace("tica", "Ética")
+    text = re.sub(r"\btica\b", "Ética", text, flags=re.IGNORECASE)
     text = text.replace("innovacin", "innovación")
     text = text.replace("Energa", "Energía")
     text = text.replace("Accin", "Acción")
